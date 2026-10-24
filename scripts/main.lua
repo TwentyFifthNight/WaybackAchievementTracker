@@ -1,5 +1,20 @@
-
 local AchievementConfig = require("achievement_config")
+local ModMenu = require("ModMenu.ModMenu")
+
+
+local DisplayClassOrder = {
+    "BPC_LongWayRoundAchievement_C",
+    "BPC_KibbleConnoisseurAchievement_C",
+    "BPC_HerbalistAchievement_C",
+    -- "BPC_PyrophobiaAchievement_C",
+    "BPC_IWillSurviveAchievement_C",
+    "BPC_CableGirlAchievement_C",
+    "BPC_TutorialCompleteAchievement_C",
+    "BPC_RealGameStartsHereAchievement_C",
+    "BPC_ThorHatesMeAchievement_C",
+    "BPC_ObjectiveSurvive_AllWeekAchievement_C",
+    "BPC_ObjectiveSurvive_AllMonthAchievement_C"
+}
 
 local function Log(message)
     print("[AchievementTracker] " .. tostring(message))
@@ -29,61 +44,223 @@ local function SafeGetProperty(obj, propertyName)
     return true, value
 end
 
-local function FormatValue(value)
-    if value == nil then
-        return "nil"
-    end
+local displayedAchievements = {}
+local menuSections = {}
 
-    if type(value) == "boolean" then
-        return value and "true" or "false"
-    end
+local function RefreshDisplayedAchievements()
+    displayedAchievements = {}
 
-    return tostring(value)
+    for _, className in ipairs(DisplayClassOrder) do
+        local config = AchievementConfig[className]
+        local ui = config and config.ui
+
+        if ui ~= nil then
+            local ok, objects = pcall(function()
+                return FindAllOf(className)
+            end)
+
+            local entry = {
+                className = className,
+                title = ui.title or className,
+                type = ui.type,
+                ui = ui,
+                instances = {},
+            }
+
+            if not ok then
+                entry.error = "Could not find achievement instances: " .. tostring(objects)
+            elseif objects == nil then
+                entry.error = "No achievement instances found"
+            else
+                for _, obj in pairs(objects) do
+                    if obj ~= nil then
+                        local instance = {
+                            name = SafeGetFullName(obj),
+                            properties = {},
+                        }
+
+                        local propertyNames = {}
+                        if ui.type == "checkboxes" then
+                            for _, property in ipairs(ui.properties or {}) do
+                                propertyNames[#propertyNames + 1] = property.property
+                            end
+                        elseif ui.type == "progress" then
+                            propertyNames = { ui.currentProperty, ui.targetProperty }
+                        end
+
+                        for _, propertyName in ipairs(propertyNames) do
+                            local success, value = SafeGetProperty(obj, propertyName)
+                            instance.properties[propertyName] = {
+                                success = success,
+                                value = value,
+                            }
+                        end
+
+                        entry.instances[#entry.instances + 1] = instance
+                    end
+                end
+
+                if #entry.instances == 0 then
+                    entry.error = "No achievement instances found"
+                end
+            end
+
+            displayedAchievements[#displayedAchievements + 1] = entry
+        end
+    end
 end
 
-local function ScanAchievementClass(className, config)
-    Log("Scanning class: " .. className)
+local function RegisterAchievementSections()
+    for _, className in ipairs(DisplayClassOrder) do
+        local config = AchievementConfig[className]
+        local ui = config and config.ui
 
-    local ok, objects = pcall(function()
-        return FindAllOf(className)
-    end)
+        if ui ~= nil then
+            local section = {
+                id = className,
+                title = ui.title or className,
+                items = {},
+            }
+            local itemIds = {}
 
-    if not ok or objects == nil then
-        Log("  Failed to find objects for " .. className)
-        return
+            if ui.type == "checkboxes" then
+                for index, property in ipairs(ui.properties or {}) do
+                    local itemId = "property_" .. index
+                    itemIds[index] = itemId
+                    section.items[#section.items + 1] = {
+                        type = "label",
+                        id = itemId,
+                        label = property.name .. ": Reading...",
+                    }
+                end
+            elseif ui.type == "progress" then
+                itemIds[1] = "progress"
+                section.items[#section.items + 1] = {
+                    type = "label",
+                    id = "progress",
+                    label = "Reading achievement progress...",
+                }
+            end
+
+            menuSections[className] = {
+                ui = ui,
+                itemIds = itemIds,
+            }
+            ModMenu.Register(section)
+        end
+    end
+end
+
+local function SetAchievementLabel(className, itemId, text)
+    if not ModMenu.SetLabel(className, itemId, text) then
+        Log(string.format("Could not update menu label %s.%s", className, itemId))
+    end
+end
+
+local function FormatProgress(currentValue, targetValue, ui)
+    local currentNumber = tonumber(currentValue)
+    local targetNumber = tonumber(targetValue)
+
+    if currentNumber == nil or targetNumber == nil then
+        return "Current: " .. currentValue .. "    Target: " .. targetValue
     end
 
-    local foundCount = 0
+    currentNumber = currentNumber * (ui.currentScale or 1)
+    local unit = ui.unit and (" " .. ui.unit) or ""
+    local bar = ""
 
-    for _, obj in pairs(objects) do
-        if obj ~= nil then
-            foundCount = foundCount + 1
+    if targetNumber > 0 then
+        local progress = math.max(0, math.min(1, currentNumber / targetNumber))
+        local filled = math.floor(progress * 16)
+        bar = string.format(
+            " [%s%s]",
+            string.rep("#", filled),
+            string.rep("-", 16 - filled)
+        )
+    end
 
-            Log("  Instance: " .. SafeGetFullName(obj))
+    local currentFormat = ui.currentFormat and ui.currentFormat or "%g"
 
-            for _, propertyName in ipairs(config.properties or {}) do
-                local success, value = SafeGetProperty(obj, propertyName)
+    return string.format(
+        currentFormat .. " / %g%s%s",
+        currentNumber,
+        targetNumber,
+        unit,
+        bar
+    )
+end
 
-                if success then
-                    Log("    " .. propertyName .. " = " .. FormatValue(value))
-                else
-                    Log("    " .. propertyName .. " — " .. tostring(value))
+local function UpdateMenuLabels()
+    for _, achievement in ipairs(displayedAchievements) do
+        local section = menuSections[achievement.className]
+
+        if section ~= nil then
+            if achievement.type == "checkboxes" then
+                for index, property in ipairs(achievement.ui.properties or {}) do
+                    local label
+
+                    if achievement.error ~= nil then
+                        label = property.name .. ": " .. achievement.error
+                    else
+                        local states = {}
+                        for _, instance in ipairs(achievement.instances) do
+                            local value = instance.properties[property.property]
+                            local state = "?"
+                            if value and value.success and type(value.value) == "boolean" then
+                                state = value.value and "✔" or "✖"
+                            end
+                            states[#states + 1] = state
+                        end
+
+                        label = property.name .. ": " .. table.concat(states, " / ")
+                    end
+
+                    SetAchievementLabel(
+                        achievement.className,
+                        section.itemIds[index],
+                        label
+                    )
                 end
+            elseif achievement.type == "progress" then
+                local label
+
+                if achievement.error ~= nil then
+                    label = achievement.error
+                else
+                    local values = {}
+                    for _, instance in ipairs(achievement.instances) do
+                        local current = instance.properties[achievement.ui.currentProperty]
+                        local target = instance.properties[achievement.ui.targetProperty]
+                        if current and target and current.success and target.success then
+                            values[#values + 1] = FormatProgress(
+                                current.value,
+                                target.value,
+                                achievement.ui
+                            )
+                        else
+                            values[#values + 1] = "Could not read current or target value"
+                        end
+                    end
+                    label = table.concat(values, "\n")
+                end
+
+                SetAchievementLabel(achievement.className, section.itemIds[1], label)
             end
         end
     end
-
-    Log("  Instances found: " .. foundCount)
 end
 
-local function ScanAllAchievements()
-    Log("Starting achievement scan")
+ModMenu.Init({
+    title = "Wayback Achievement Tracker",
+    instanceId = "WaybackAchievementTracker",
+    key = Key.F7,
+    keyHint = "F7",
+})
 
-    for className, config in pairs(AchievementConfig) do
-        ScanAchievementClass(className, config)
-    end
+RegisterAchievementSections()
+ModMenu.OnOpen(function()
+    RefreshDisplayedAchievements()
+    UpdateMenuLabels()
+end)
 
-    Log("Achievement scan complete")
-end
-
-ScanAllAchievements()
+Log("Loaded — open the ModMenu with F7")
