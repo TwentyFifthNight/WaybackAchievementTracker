@@ -4,8 +4,8 @@ UE4SS Lua mod for **Prologue Go Wayback**. It displays selected achievement prog
 
 ## Requirements
 
-- UE4SS installed for Prologue Go Wayback (experimental version was used).
-- [ModMenu](https://github.com/mattdavida/ue4ss-ModMenu) installed in UE4SS's `Mods\shared\ModMenu` directory.
+- [UE4SS (3.0.1 experimental)](https://github.com/UE4SS-RE/RE-UE4SS) installed for Prologue Go Wayback.
+- [ModMenu 1.4.0](https://github.com/mattdavida/ue4ss-ModMenu) installed in UE4SS's `Mods\shared\ModMenu` directory.
 
 ## Installation
 
