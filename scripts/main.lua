@@ -182,6 +182,7 @@ local function FormatProgress(currentValue, targetValue, property)
         local currentDays = math.floor(currentNumber / 86400)
         local currentHours = math.floor((currentValue % 86400) / 3600)
         local currentSeconds = currentNumber % 3600
+        targetNumber = math.floor(targetNumber / 86400)
         return string.format(
             "%g%s %g%s %g%s / %g%s%s",
             currentDays, "d",
