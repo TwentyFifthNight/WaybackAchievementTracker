@@ -7,13 +7,12 @@ local AchievementConfig = {
             "CheckedTopRight",
         },
         ui = {
-            type = "checkboxes",
             title = "Long Way Round",
             properties = {
-                { name = "Bottom left", property = "CheckedBottomLeft" },
-                { name = "Bottom right", property = "CheckedBottomRight" },
-                { name = "Top left", property = "CheckedTopLeft" },
-                { name = "Top right", property = "CheckedTopRight" },
+                { name = "Bottom left", type = "checkbox", property = "CheckedBottomLeft" },
+                { name = "Bottom right", type = "checkbox", property = "CheckedBottomRight" },
+                { name = "Top left", type = "checkbox", property = "CheckedTopLeft" },
+                { name = "Top right", type = "checkbox", property = "CheckedTopRight" },
             },
         },
     },
@@ -24,40 +23,27 @@ local AchievementConfig = {
             "AchievementFailed",
         },
         ui = {
-            type = "checkboxes",
             title = "Kibble Connoisseur",
             properties = {
-                { name = "Ate accepted consumable", property = "AteAtLeaseOneAcceptedConsumable" },
-                { name = "Achievement failed", property = "AchievementFailed" },
+                { name = "Ate accepted consumable", type = "checkbox", property = "AteAtLeaseOneAcceptedConsumable" },
+                { name = "Achievement failed", type = "checkbox", property = "AchievementFailed" },
             },
         },
     },
 
     BPC_HerbalistAchievement_C = {
         properties = {
+            "AteAtLeaseOneAcceptedConsumable",
             "AchievementFailed",
         },
         ui = {
-            type = "checkboxes",
             title = "Herbalist",
             properties = {
-                { name = "Achievement failed", property = "AchievementFailed" },
+                { name = "Ate accepted consumable", type = "checkbox", property = "AteAtLeaseOneAcceptedConsumable" },
+                { name = "Achievement failed", type = "checkbox", property = "AchievementFailed" },
             },
         },
     },
-
-    -- BPC_PyrophobiaAchievement_C = {
-    --     properties = {
-    --         "AchievementFailed",
-    --     },
-    --     ui = {
-    --         type = "checkboxes",
-    --         title = "Pyrophobia",
-    --         properties = {
-    --             { name = "Achievement failed", property = "AchievementFailed" },
-    --         },
-    --     },
-    -- },
 
     BPC_IWillSurviveAchievement_C = {
         properties = {
@@ -65,10 +51,10 @@ local AchievementConfig = {
             "Target",
         },
         ui = {
-            type = "progress",
             title = "I Will Survive",
-            currentProperty = "CurrentProgress",
-            targetProperty = "Target",
+            properties = {
+                { name = "Deaths", type = "progress", currentProperty = "CurrentProgress", targetProperty = "Target" },
+            }
         },
     },
 
@@ -78,10 +64,10 @@ local AchievementConfig = {
             "TargetTowersToClimb",
         },
         ui = {
-            type = "progress",
             title = "Cable Girl",
-            currentProperty = "CurrentTowersClimbed",
-            targetProperty = "TargetTowersToClimb",
+            properties = {
+                { name = "Towers", type = "progress", currentProperty = "CurrentTowersClimbed", targetProperty = "TargetTowersToClimb" },
+            }
         },
     },
 
@@ -92,13 +78,16 @@ local AchievementConfig = {
             "AchievementTargetDaysDuration"
         },
         ui = {
-            type = "progress",
             title = "Tutorial Complete",
-            currentProperty = "AchievementTimeSurvivedSeconds",
-            targetProperty = "AchievementTargetDaysDuration",
-            currentScale = 1 / 86400,
-            currentFormat = "%.2f",
-            unit = "days",
+            properties = {
+                { 
+                    name = "Days",
+                    type = "progress",
+                    currentProperty = "AchievementTimeSurvivedSeconds",
+                    targetProperty = "AchievementTargetTimeSeconds",
+                    unit = "days",
+                },
+            }
         },
     },
 
@@ -109,13 +98,16 @@ local AchievementConfig = {
             "AchievementTargetDaysDuration"
         },
         ui = {
-            type = "progress",
             title = "The Real Game Starts Here",
-            currentProperty = "AchievementTimeSurvivedSeconds",
-            targetProperty = "AchievementTargetDaysDuration",
-            currentScale = 1 / 86400,
-            currentFormat = "%.2f",
-            unit = "days",
+            properties = {
+                { 
+                    name = "Days", 
+                    type = "progress", 
+                    currentProperty = "AchievementTimeSurvivedSeconds", 
+                    targetProperty = "AchievementTargetTimeSeconds",
+                    unit = "days",
+                },
+            }
         },
     },
 
@@ -126,13 +118,16 @@ local AchievementConfig = {
             "AchievementTargetDaysDuration"
         },
         ui = {
-            type = "progress",
             title = "I can do this all week",
-            currentProperty = "AchievementTimeSurvivedSeconds",
-            targetProperty = "AchievementTargetDaysDuration",
-            currentScale = 1 / 86400,
-            currentFormat = "%.2f",
-            unit = "days",
+            properties = {
+                {
+                    name = "Days",
+                    type = "progress",
+                    currentProperty = "AchievementTimeSurvivedSeconds",
+                    targetProperty = "AchievementTargetTimeSeconds",
+                    unit = "days",
+                },
+            }
         },
     },
 
@@ -143,13 +138,16 @@ local AchievementConfig = {
             "AchievementTargetDaysDuration"
         },
         ui = {
-            type = "progress",
             title = "I can do this all month",
-            currentProperty = "AchievementTimeSurvivedSeconds",
-            targetProperty = "AchievementTargetDaysDuration",
-            currentScale = 1 / 86400,
-            currentFormat = "%.2f",
-            unit = "days",
+            properties = {
+                {
+                    name = "Days",
+                    type = "progress",
+                    currentProperty = "AchievementTimeSurvivedSeconds",
+                    targetProperty = "AchievementTargetTimeSeconds",
+                    unit = "days",
+                },
+            }
         },
     },
 
@@ -159,10 +157,10 @@ local AchievementConfig = {
             "StormsForAchievement",
         },
         ui = {
-            type = "progress",
             title = "Thor Hates Me",
-            currentProperty = "StormsCount",
-            targetProperty = "StormsForAchievement",
+            properties = {
+                { name = "Storms", type = "progress", currentProperty = "StormsCount", targetProperty = "StormsForAchievement" },
+            }
         },
     },
 

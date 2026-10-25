@@ -62,7 +62,6 @@ local function RefreshDisplayedAchievements()
             local entry = {
                 className = className,
                 title = ui.title or className,
-                type = ui.type,
                 ui = ui,
                 instances = {},
             }
@@ -80,14 +79,15 @@ local function RefreshDisplayedAchievements()
                         }
 
                         local propertyNames = {}
-                        if ui.type == "checkboxes" then
-                            for _, property in ipairs(ui.properties or {}) do
+                        for _, property in ipairs(ui.properties or {}) do
+                            if property.type == "checkbox" then
                                 propertyNames[#propertyNames + 1] = property.property
+                            elseif property.type == "progress" then
+                                propertyNames[#propertyNames + 1] = property.currentProperty
+                                propertyNames[#propertyNames + 1] = property.targetProperty
                             end
-                        elseif ui.type == "progress" then
-                            propertyNames = { ui.currentProperty, ui.targetProperty }
                         end
-
+                        
                         for _, propertyName in ipairs(propertyNames) do
                             local success, value = SafeGetProperty(obj, propertyName)
                             instance.properties[propertyName] = {
@@ -123,24 +123,16 @@ local function RegisterAchievementSections()
             }
             local itemIds = {}
 
-            if ui.type == "checkboxes" then
-                for index, property in ipairs(ui.properties or {}) do
-                    local itemId = "property_" .. index
-                    itemIds[index] = itemId
-                    section.items[#section.items + 1] = {
-                        type = "label",
-                        id = itemId,
-                        label = property.name .. ": Reading...",
-                    }
-                end
-            elseif ui.type == "progress" then
-                itemIds[1] = "progress"
+            for index, property in ipairs(ui.properties or {}) do
+                local itemId = "property_" .. index
+                itemIds[index] = itemId
                 section.items[#section.items + 1] = {
                     type = "label",
-                    id = "progress",
-                    label = "Reading achievement progress...",
+                    id = itemId,
+                    label = property.name .. ": Reading...",
                 }
             end
+            
 
             menuSections[className] = {
                 ui = ui,
@@ -157,7 +149,7 @@ local function SetAchievementLabel(className, itemId, text)
     end
 end
 
-local function FormatProgress(currentValue, targetValue, ui)
+local function FormatProgress(currentValue, targetValue, property)
     local currentNumber = tonumber(currentValue)
     local targetNumber = tonumber(targetValue)
 
@@ -165,8 +157,6 @@ local function FormatProgress(currentValue, targetValue, ui)
         return "Current: " .. currentValue .. "    Target: " .. targetValue
     end
 
-    currentNumber = currentNumber * (ui.currentScale or 1)
-    local unit = ui.unit and (" " .. ui.unit) or ""
     local bar = ""
 
     if targetNumber > 0 then
@@ -179,74 +169,85 @@ local function FormatProgress(currentValue, targetValue, ui)
         )
     end
 
-    local currentFormat = ui.currentFormat and ui.currentFormat or "%g"
+    local unit = property.unit and (" " .. property.unit) or ""
 
-    return string.format(
-        currentFormat .. " / %g%s%s",
-        currentNumber,
-        targetNumber,
-        unit,
-        bar
-    )
+    if property.unit == "days" then
+        local currentDays = math.floor(currentNumber / 86400)
+        local currentHours = math.floor((currentValue % 86400) / 3600)
+        local currentSeconds = currentNumber % 3600
+        return string.format(
+            "%g%s %g%s %g%s / %g%s%s",
+            currentDays, "d",
+            currentHours, "h",
+            currentSeconds, "s",
+            targetNumber,
+            unit,
+            bar
+        )
+    else
+        return string.format(
+            "%g / %g%s%s",
+            currentNumber,
+            targetNumber,
+            unit,
+            bar
+        )
+    end
 end
 
 local function UpdateMenuLabels()
     for _, achievement in ipairs(displayedAchievements) do
         local section = menuSections[achievement.className]
 
-        if section ~= nil then
-            if achievement.type == "checkboxes" then
-                for index, property in ipairs(achievement.ui.properties or {}) do
-                    local label
+        if section == nil then
+            goto continue_achievement_loop
+        end
 
-                    if achievement.error ~= nil then
-                        label = property.name .. ": " .. achievement.error
-                    else
-                        local states = {}
-                        for _, instance in ipairs(achievement.instances) do
-                            local value = instance.properties[property.property]
-                            local state = "?"
-                            if value and value.success and type(value.value) == "boolean" then
-                                state = value.value and "✔" or "✖"
-                            end
-                            states[#states + 1] = state
+        for index, property in ipairs(achievement.ui.properties or {}) do
+            local label
+
+            if achievement.error ~= nil then
+                label = property.name .. ": " .. achievement.error
+            else
+                local values = {}
+                for _, instance in ipairs(achievement.instances) do
+                    if property.type == "checkbox" then
+                        local value = instance.properties[property.property]
+                        local state = "?"
+                        if value and value.success and type(value.value) == "boolean" then
+                            state = value.value and "✔" or "✖"
                         end
-
-                        label = property.name .. ": " .. table.concat(states, " / ")
-                    end
-
-                    SetAchievementLabel(
-                        achievement.className,
-                        section.itemIds[index],
-                        label
-                    )
-                end
-            elseif achievement.type == "progress" then
-                local label
-
-                if achievement.error ~= nil then
-                    label = achievement.error
-                else
-                    local values = {}
-                    for _, instance in ipairs(achievement.instances) do
-                        local current = instance.properties[achievement.ui.currentProperty]
-                        local target = instance.properties[achievement.ui.targetProperty]
+                        values[#values + 1] = state
+                    elseif property.type == "progress" then
+                        local current = instance.properties[property.currentProperty]
+                        local target = instance.properties[property.targetProperty]
                         if current and target and current.success and target.success then
                             values[#values + 1] = FormatProgress(
                                 current.value,
                                 target.value,
-                                achievement.ui
+                                property
                             )
                         else
                             values[#values + 1] = "Could not read current or target value"
                         end
                     end
-                    label = table.concat(values, "\n")
                 end
 
-                SetAchievementLabel(achievement.className, section.itemIds[1], label)
+                if property.type == "checkbox" then
+                    label = property.name .. ": " .. table.concat(states, " / ")
+                elseif property.type == "progress" then
+                    label = table.concat(values, "\n")
+                end
             end
+
+            SetAchievementLabel(
+                achievement.className,
+                section.itemIds[index],
+                label
+            )
         end
+
+        ::continue_achievement_loop::
     end
 end
 
