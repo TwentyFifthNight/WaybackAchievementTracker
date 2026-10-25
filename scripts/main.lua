@@ -4,9 +4,9 @@ local ModMenu = require("ModMenu.ModMenu")
 
 local DisplayClassOrder = {
     "BPC_LongWayRoundAchievement_C",
+    "BPC_WandererAchievement_C",
     "BPC_KibbleConnoisseurAchievement_C",
     "BPC_HerbalistAchievement_C",
-    -- "BPC_PyrophobiaAchievement_C",
     "BPC_IWillSurviveAchievement_C",
     "BPC_CableGirlAchievement_C",
     "BPC_TutorialCompleteAchievement_C",
@@ -47,61 +47,68 @@ end
 local displayedAchievements = {}
 local menuSections = {}
 
+local function AddPropertiesToTable(obj, properties, tab)
+    for _, propertyName in ipairs(properties or {}) do
+        local success, value = SafeGetProperty(obj, propertyName)
+        tab[propertyName] = {
+            success = success,
+            value = value,
+        }
+    end
+end
+
+local function LoadObjectPropertiesToInstance(object, properties, externalProperties)
+    if object == nil then
+        return nil
+    end
+
+    local instance = {
+        name = SafeGetFullName(object),
+        properties = {},
+    }
+    AddPropertiesToTable(object, properties or {}, instance.properties)
+
+    for _, externalProperty in ipairs(externalProperties or {}) do
+        local externalClass = externalProperty.class
+        local found, externalObject = pcall(function()
+            return FindFirstOf(externalClass)
+        end)
+        if found and externalObject ~= nil then
+            AddPropertiesToTable(externalObject, externalProperty.properties or {}, instance.properties)
+        end
+    end
+
+    return instance
+end
+
 local function RefreshDisplayedAchievements()
     displayedAchievements = {}
 
     for _, className in ipairs(DisplayClassOrder) do
         local config = AchievementConfig[className]
         local ui = config and config.ui
+        local properties = config and config.properties
+        local externalProperties = config and config.externalProperties
 
         if ui ~= nil then
-            local ok, objects = pcall(function()
-                return FindAllOf(className)
+            local ok, object = pcall(function()
+                return FindFirstOf(className)
             end)
 
             local entry = {
                 className = className,
                 title = ui.title or className,
                 ui = ui,
-                instances = {},
             }
 
             if not ok then
-                entry.error = "Could not find achievement instances: " .. tostring(objects)
-            elseif objects == nil then
-                entry.error = "No achievement instances found"
+                entry.error = "Could not find achievement instance: " .. tostring(object)
+            elseif object == nil then
+                entry.error = "No achievement instance found"
             else
-                for _, obj in pairs(objects) do
-                    if obj ~= nil then
-                        local instance = {
-                            name = SafeGetFullName(obj),
-                            properties = {},
-                        }
-
-                        local propertyNames = {}
-                        for _, property in ipairs(ui.properties or {}) do
-                            if property.type == "checkbox" then
-                                propertyNames[#propertyNames + 1] = property.property
-                            elseif property.type == "progress" then
-                                propertyNames[#propertyNames + 1] = property.currentProperty
-                                propertyNames[#propertyNames + 1] = property.targetProperty
-                            end
-                        end
-                        
-                        for _, propertyName in ipairs(propertyNames) do
-                            local success, value = SafeGetProperty(obj, propertyName)
-                            instance.properties[propertyName] = {
-                                success = success,
-                                value = value,
-                            }
-                        end
-
-                        entry.instances[#entry.instances + 1] = instance
-                    end
-                end
-
-                if #entry.instances == 0 then
-                    entry.error = "No achievement instances found"
+                entry.instance = LoadObjectPropertiesToInstance(object, properties, externalProperties)
+                if entry.instance == nil then
+                    entry.error = "No achievement instance found"
                 end
             end
 
@@ -204,39 +211,32 @@ local function UpdateMenuLabels()
         end
 
         for index, property in ipairs(achievement.ui.properties or {}) do
-            local label
+            local label = ""
 
             if achievement.error ~= nil then
                 label = property.name .. ": " .. achievement.error
             else
-                local values = {}
-                for _, instance in ipairs(achievement.instances) do
-                    if property.type == "checkbox" then
-                        local value = instance.properties[property.property]
-                        local state = "?"
-                        if value and value.success and type(value.value) == "boolean" then
-                            state = value.value and "✔" or "✖"
-                        end
-                        values[#values + 1] = state
-                    elseif property.type == "progress" then
-                        local current = instance.properties[property.currentProperty]
-                        local target = instance.properties[property.targetProperty]
-                        if current and target and current.success and target.success then
-                            values[#values + 1] = FormatProgress(
-                                current.value,
-                                target.value,
-                                property
-                            )
-                        else
-                            values[#values + 1] = "Could not read current or target value"
-                        end
-                    end
-                end
-
+                local instance = achievement.instance
                 if property.type == "checkbox" then
-                    label = property.name .. ": " .. table.concat(states, " / ")
+                    local value = instance.properties[property.property]
+                    local state = "?"
+                    if value and value.success and type(value.value) == "boolean" then
+                        state = value.value and "✔" or "✖"
+                    end
+
+                    label = property.name .. ": " .. state
                 elseif property.type == "progress" then
-                    label = table.concat(values, "\n")
+                    local current = instance.properties[property.currentProperty]
+                    local target = instance.properties[property.targetProperty]
+                    if current and target and current.success and target.success then
+                        label = FormatProgress(
+                            current.value,
+                            target.value,
+                            property
+                        )
+                    else
+                        label = "Could not read current or target value"
+                    end
                 end
             end
 

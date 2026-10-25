@@ -175,6 +175,15 @@ local AchievementConfig = {
         properties = {
             "TargetDistanceToRun",
         },
+        externalProperties = {
+            { class = "BP_Character_Lucy_C", properties = { "DistanceTravelled" } }
+        },
+        ui = {
+            title = "Wanderer",
+            properties = {
+                { name = "Distance", type = "progress", currentProperty = "DistanceTravelled", targetProperty = "TargetDistanceToRun" },
+            }
+        },
     },
 
     BPC_SwissCommuteAchievement_c = {
