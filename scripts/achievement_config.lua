@@ -1,3 +1,25 @@
+local function createDayProgressAchievement(title)
+    return {
+        properties = {
+            "AchievementTimeSurvivedSeconds",
+            "AchievementTargetTimeSeconds",
+            "AchievementTargetDaysDuration"
+        },
+        ui = {
+            title = title,
+            properties = {
+                {
+                    name = "Days",
+                    type = "progress",
+                    currentProperty = "AchievementTimeSurvivedSeconds",
+                    targetProperty = "AchievementTargetTimeSeconds",
+                    unit = "days",
+                },
+            }
+        },
+    }
+end
+
 local AchievementConfig = {
     BPC_LongWayRoundAchievement_C = {
         properties = {
@@ -71,85 +93,13 @@ local AchievementConfig = {
         },
     },
 
-    BPC_TutorialCompleteAchievement_C = {
-        properties = {
-            "AchievementTimeSurvivedSeconds",
-            "AchievementTargetTimeSeconds",
-            "AchievementTargetDaysDuration"
-        },
-        ui = {
-            title = "Tutorial Complete",
-            properties = {
-                { 
-                    name = "Days",
-                    type = "progress",
-                    currentProperty = "AchievementTimeSurvivedSeconds",
-                    targetProperty = "AchievementTargetTimeSeconds",
-                    unit = "days",
-                },
-            }
-        },
-    },
+    BPC_TutorialCompleteAchievement_C = createDayProgressAchievement("Tutorial Complete"),
 
-    BPC_RealGameStartsHereAchievement_C = {
-        properties = {
-            "AchievementTimeSurvivedSeconds",
-            "AchievementTargetTimeSeconds",
-            "AchievementTargetDaysDuration"
-        },
-        ui = {
-            title = "The Real Game Starts Here",
-            properties = {
-                { 
-                    name = "Days", 
-                    type = "progress", 
-                    currentProperty = "AchievementTimeSurvivedSeconds", 
-                    targetProperty = "AchievementTargetTimeSeconds",
-                    unit = "days",
-                },
-            }
-        },
-    },
+    BPC_RealGameStartsHereAchievement_C = createDayProgressAchievement("The Real Game Starts Here"),
 
-    BPC_ObjectiveSurvive_AllWeekAchievement_C = {
-        properties = {
-            "AchievementTimeSurvivedSeconds",
-            "AchievementTargetTimeSeconds",
-            "AchievementTargetDaysDuration"
-        },
-        ui = {
-            title = "I can do this all week",
-            properties = {
-                {
-                    name = "Days",
-                    type = "progress",
-                    currentProperty = "AchievementTimeSurvivedSeconds",
-                    targetProperty = "AchievementTargetTimeSeconds",
-                    unit = "days",
-                },
-            }
-        },
-    },
+    BPC_ObjectiveSurvive_AllWeekAchievement_C = createDayProgressAchievement("I can do this all week"),
 
-    BPC_ObjectiveSurvive_AllMonthAchievement_C = {
-        properties = {
-            "AchievementTimeSurvivedSeconds",
-            "AchievementTargetTimeSeconds",
-            "AchievementTargetDaysDuration"
-        },
-        ui = {
-            title = "I can do this all month",
-            properties = {
-                {
-                    name = "Days",
-                    type = "progress",
-                    currentProperty = "AchievementTimeSurvivedSeconds",
-                    targetProperty = "AchievementTargetTimeSeconds",
-                    unit = "days",
-                },
-            }
-        },
-    },
+    BPC_ObjectiveSurvive_AllMonthAchievement_C = createDayProgressAchievement("I can do this all month"),
 
     BPC_ThorHatesMeAchievement_C = {
         properties = {

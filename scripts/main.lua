@@ -179,17 +179,16 @@ local function FormatProgress(currentValue, targetValue, property)
     local unit = property.unit and (" " .. property.unit) or ""
 
     if property.unit == "days" then
-        local currentDays = math.floor(currentNumber / 86400)
-        local currentHours = math.floor((currentValue % 86400) / 3600)
+        local currentHours = math.floor(currentNumber / 3600)
         local currentSeconds = currentNumber % 3600
-        targetNumber = math.floor(targetNumber / 86400)
+        local targetHours = math.floor(targetNumber / 3600)
+        local targetSeconds = math.floor(targetNumber % 3600)
         return string.format(
-            "%g%s %g%s %g%s / %g%s%s",
-            currentDays, "d",
+            "%g%s %g%s / %g%s %g%s%s",
             currentHours, "h",
             currentSeconds, "s",
-            targetNumber,
-            unit,
+            targetHours, "h",
+            targetSeconds, "s",
             bar
         )
     else
