@@ -131,7 +131,7 @@ local AchievementConfig = {
         ui = {
             title = "Wanderer",
             properties = {
-                { name = "Distance", type = "progress", currentProperty = "DistanceTravelled", targetProperty = "TargetDistanceToRun" },
+                { name = "Distance", type = "progress", currentProperty = "DistanceTravelled", targetProperty = "TargetDistanceToRun", targetMultiplier = 1000 },
             }
         },
     },

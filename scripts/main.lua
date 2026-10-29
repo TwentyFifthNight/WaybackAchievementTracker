@@ -160,6 +160,10 @@ local function FormatProgress(currentValue, targetValue, property)
     local currentNumber = tonumber(currentValue)
     local targetNumber = tonumber(targetValue)
 
+    if property.targetMultiplier ~= nil then
+        targetNumber = targetNumber * property.targetMultiplier
+    end
+
     if currentNumber == nil or targetNumber == nil then
         return "Current: " .. currentValue .. "    Target: " .. targetValue
     end
@@ -181,10 +185,10 @@ local function FormatProgress(currentValue, targetValue, property)
     if property.unit == "days" then
         local currentHours = math.floor(currentNumber / 3600)
         local currentMinutes = math.floor((currentNumber % 3600) / 60)
-        local currentSeconds = currentNumber % 60
+        local currentSeconds = math.floor(currentNumber % 60)
         local targetHours = math.floor(targetNumber / 3600)
         local targetMinutes = math.floor((targetNumber % 3600) / 60)
-        local targetSeconds = targetNumber % 60
+        local targetSeconds = math.floor(targetNumber % 60)
         return string.format(
             "%g%s %g%s %g%s / %g%s %g%s %g%s%s",
             currentHours, "h",
@@ -198,7 +202,7 @@ local function FormatProgress(currentValue, targetValue, property)
     else
         return string.format(
             "%g / %g%s%s",
-            currentNumber,
+            math.floor(currentNumber),
             targetNumber,
             unit,
             bar
