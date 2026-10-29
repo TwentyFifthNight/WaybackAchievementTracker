@@ -32,6 +32,23 @@ local function SafeGetFullName(obj)
     return "<unknown object>"
 end
 
+local function SafeGetClassName(obj)
+    local ok, result = pcall(function()
+        return obj:GetFullName()
+    end)
+
+    if not ok then
+        return false, "Could not determine object class: " .. tostring(result)
+    end
+
+    local className = tostring(result):match("^([^%s]+)")
+    if className == nil then
+        return false, "Could not determine object class from full name: " .. tostring(result)
+    end
+
+    return true, className
+end
+
 local function SafeGetProperty(obj, propertyName)
     local ok, value = pcall(function()
         return obj:GetPropertyValue(propertyName)
@@ -91,9 +108,20 @@ local function RefreshDisplayedAchievements()
         local externalProperties = config and config.externalProperties
 
         if ui ~= nil then
-            local ok, object = pcall(function()
-                return FindFirstOf(className)
+            local ok, objects = pcall(function()
+                return FindAllOf(className)
             end)
+            local object
+
+            if ok and objects ~= nil then
+                for _, candidate in pairs(objects) do
+                    local classOk, actualClassName = SafeGetClassName(candidate)
+                    if classOk and actualClassName == className then
+                        object = candidate
+                        break
+                    end
+                end
+            end
 
             local entry = {
                 className = className,
@@ -102,7 +130,7 @@ local function RefreshDisplayedAchievements()
             }
 
             if not ok then
-                entry.error = "Could not find achievement instance: " .. tostring(object)
+                entry.error = "Could not find achievement instance"
             elseif object == nil then
                 entry.error = "No achievement instance found"
             else
@@ -127,6 +155,7 @@ local function RegisterAchievementSections()
                 id = className,
                 title = ui.title or className,
                 items = {},
+                tab = ui.mode,
             }
             local itemIds = {}
 
@@ -165,7 +194,7 @@ local function FormatProgress(currentValue, targetValue, property)
     end
 
     if currentNumber == nil or targetNumber == nil then
-        return "Current: " .. currentValue .. "    Target: " .. targetValue
+        return "Progress values are not present"
     end
 
     local bar = ""
@@ -264,6 +293,7 @@ ModMenu.Init({
     instanceId = "WaybackAchievementTracker",
     key = Key.F7,
     keyHint = "F7",
+    tabs = { "Wayback", "Survive" },
 })
 
 RegisterAchievementSections()

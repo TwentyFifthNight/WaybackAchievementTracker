@@ -20,6 +20,12 @@ local function createDayProgressAchievement(title)
     }
 end
 
+local function createDayProgressAchievementSurviveMode(title)
+    local object = createDayProgressAchievement(title)
+    object.ui.mode = 'Survive'
+    return object
+end
+
 local AchievementConfig = {
     BPC_LongWayRoundAchievement_C = {
         properties = {
@@ -97,9 +103,9 @@ local AchievementConfig = {
 
     BPC_RealGameStartsHereAchievement_C = createDayProgressAchievement("The Real Game Starts Here"),
 
-    BPC_ObjectiveSurvive_AllWeekAchievement_C = createDayProgressAchievement("I can do this all week"),
+    BPC_ObjectiveSurvive_AllWeekAchievement_C = createDayProgressAchievementSurviveMode("I can do this all week"),
 
-    BPC_ObjectiveSurvive_AllMonthAchievement_C = createDayProgressAchievement("I can do this all month"),
+    BPC_ObjectiveSurvive_AllMonthAchievement_C = createDayProgressAchievementSurviveMode("I can do this all month"),
 
     BPC_ThorHatesMeAchievement_C = {
         properties = {
