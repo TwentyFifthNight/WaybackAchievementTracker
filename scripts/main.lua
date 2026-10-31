@@ -1,6 +1,8 @@
 local AchievementConfig = require("achievement_config")
 local ModMenu = require("ModMenu.ModMenu")
 
+local displayedAchievements = {}
+local menuSections = {}
 
 local DisplayClassOrder = {
     "BPC_LongWayRoundAchievement_C",
@@ -20,7 +22,7 @@ local function Log(message)
     print("[AchievementTracker] " .. tostring(message))
 end
 
-local function SafeGetFullName(obj)
+local function SafeGetClassName(obj)
     local ok, result = pcall(function()
         return obj:GetFullName()
     end)
@@ -32,9 +34,9 @@ local function SafeGetFullName(obj)
     return "<unknown object>"
 end
 
-local function SafeGetClassName(obj)
+local function SafeGetInstanceName(instance)
     local ok, result = pcall(function()
-        return obj:GetFullName()
+        return instance:GetFullName()
     end)
 
     if not ok then
@@ -61,8 +63,23 @@ local function SafeGetProperty(obj, propertyName)
     return true, value
 end
 
-local displayedAchievements = {}
-local menuSections = {}
+local function SafeGetClassInstance(className)
+    local ok, objects = pcall(function()
+        return FindAllOf(className)
+    end)
+    local object = nil
+
+    if ok and objects ~= nil then
+        for _, candidate in pairs(objects) do
+            local instanceOk, actualClassName = SafeGetInstanceName(candidate)
+            if instanceOk and actualClassName == className then
+                object = candidate
+                break
+            end
+        end
+    end
+    return object
+end
 
 local function AddPropertiesToTable(obj, properties, tab)
     for _, propertyName in ipairs(properties or {}) do
@@ -80,17 +97,15 @@ local function LoadObjectPropertiesToInstance(object, properties, externalProper
     end
 
     local instance = {
-        name = SafeGetFullName(object),
+        name = SafeGetClassName(object),
         properties = {},
     }
     AddPropertiesToTable(object, properties or {}, instance.properties)
 
     for _, externalProperty in ipairs(externalProperties or {}) do
         local externalClass = externalProperty.class
-        local found, externalObject = pcall(function()
-            return FindFirstOf(externalClass)
-        end)
-        if found and externalObject ~= nil then
+        local externalObject = SafeGetClassInstance(externalClass)
+        if externalObject ~= nil then
             AddPropertiesToTable(externalObject, externalProperty.properties or {}, instance.properties)
         end
     end
@@ -108,20 +123,7 @@ local function RefreshDisplayedAchievements()
         local externalProperties = config and config.externalProperties
 
         if ui ~= nil then
-            local ok, objects = pcall(function()
-                return FindAllOf(className)
-            end)
-            local object
-
-            if ok and objects ~= nil then
-                for _, candidate in pairs(objects) do
-                    local classOk, actualClassName = SafeGetClassName(candidate)
-                    if classOk and actualClassName == className then
-                        object = candidate
-                        break
-                    end
-                end
-            end
+            local object = SafeGetClassInstance(className)
 
             local entry = {
                 className = className,
@@ -129,9 +131,7 @@ local function RefreshDisplayedAchievements()
                 ui = ui,
             }
 
-            if not ok then
-                entry.error = "Could not find achievement instance"
-            elseif object == nil then
+            if object == nil then
                 entry.error = "No achievement instance found"
             else
                 entry.instance = LoadObjectPropertiesToInstance(object, properties, externalProperties)
