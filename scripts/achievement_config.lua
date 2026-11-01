@@ -26,6 +26,22 @@ local function createDayProgressAchievementSurviveMode(title)
     return object
 end
 
+local function createFoodAchievement(title)
+    return {
+        properties = {
+            "AteAtLeaseOneAcceptedConsumable",
+            "AchievementFailed",
+        },
+        ui = {
+            title = title,
+            properties = {
+                { name = "Ate accepted consumable", type = "checkbox", property = "AteAtLeaseOneAcceptedConsumable" },
+                { name = "Achievement failed", type = "checkbox", property = "AchievementFailed" },
+            },
+        },
+    }
+end
+
 local AchievementConfig = {
     BPC_LongWayRoundAchievement_C = {
         properties = {
@@ -45,30 +61,30 @@ local AchievementConfig = {
         },
     },
 
-    BPC_KibbleConnoisseurAchievement_C = {
+    BPC_KibbleConnoisseurAchievement_C = createFoodAchievement("Kibble Connoisseur"),
+
+    BPC_HerbalistAchievement_C = createFoodAchievement("Herbalist"),
+
+    BPC_PyrophobiaAchievement_C = {
         properties = {
-            "AteAtLeaseOneAcceptedConsumable",
             "AchievementFailed",
         },
         ui = {
-            title = "Kibble Connoisseur",
+            title = "Pyrophobia",
             properties = {
-                { name = "Ate accepted consumable", type = "checkbox", property = "AteAtLeaseOneAcceptedConsumable" },
                 { name = "Achievement failed", type = "checkbox", property = "AchievementFailed" },
             },
         },
     },
 
-    BPC_HerbalistAchievement_C = {
+    BPC_BalancedDietAchievement_C = {
         properties = {
-            "AteAtLeaseOneAcceptedConsumable",
-            "AchievementFailed",
+            "HasAlreadyFailed",
         },
         ui = {
-            title = "Herbalist",
+            title = "Balanced diet",
             properties = {
-                { name = "Ate accepted consumable", type = "checkbox", property = "AteAtLeaseOneAcceptedConsumable" },
-                { name = "Achievement failed", type = "checkbox", property = "AchievementFailed" },
+                { name = "Achievement failed", type = "checkbox", property = "HasAlreadyFailed" },
             },
         },
     },
@@ -120,13 +136,6 @@ local AchievementConfig = {
         },
     },
 
-    BPC_DJAchievement_C = {
-        properties = {
-            "CassettesToFind",
-            "CurrentInventory",
-        },
-    },
-
     BPC_WandererAchievement_C = {
         properties = {
             "TargetDistanceToRun",
@@ -139,6 +148,13 @@ local AchievementConfig = {
             properties = {
                 { name = "Distance", type = "progress", currentProperty = "DistanceTravelled", targetProperty = "TargetDistanceToRun", targetMultiplier = 1000 },
             }
+        },
+    },
+
+    BPC_DJAchievement_C = {
+        properties = {
+            "CassettesToFind",
+            "CurrentInventory",
         },
     },
 

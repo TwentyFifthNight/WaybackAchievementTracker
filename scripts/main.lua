@@ -9,6 +9,8 @@ local DisplayClassOrder = {
     "BPC_WandererAchievement_C",
     "BPC_KibbleConnoisseurAchievement_C",
     "BPC_HerbalistAchievement_C",
+    "BPC_PyrophobiaAchievement_C",
+    "BPC_BalancedDietAchievement_C",
     "BPC_IWillSurviveAchievement_C",
     "BPC_CableGirlAchievement_C",
     "BPC_TutorialCompleteAchievement_C",
