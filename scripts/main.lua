@@ -290,6 +290,21 @@ local function UpdateMenuLabels()
     end
 end
 
+local refreshTimerHandle = nil
+
+local function RefreshModal()
+    if not ModMenu.IsOpen() then
+        if refreshTimerHandle ~= nil then
+            CancelDelayedAction(refreshTimerHandle)
+            refreshTimerHandle = nil
+        end
+        return
+    end
+
+    RefreshDisplayedAchievements()
+    UpdateMenuLabels()
+end
+
 ModMenu.Init({
     title = "Wayback Achievement Tracker",
     instanceId = "WaybackAchievementTracker",
@@ -300,8 +315,11 @@ ModMenu.Init({
 
 RegisterAchievementSections()
 ModMenu.OnOpen(function()
-    RefreshDisplayedAchievements()
-    UpdateMenuLabels()
+    RefreshModal()
+
+    if refreshTimerHandle == nil then
+        refreshTimerHandle = LoopInGameThreadWithDelay(5000, RefreshModal)
+    end
 end)
 
 Log("Loaded — open the ModMenu with F7")

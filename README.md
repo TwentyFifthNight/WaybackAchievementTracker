@@ -37,10 +37,10 @@ UE4SS Lua mod for **Prologue Go Wayback**. It displays selected achievement prog
    ```
 
 5. Launch the game and press **F7** to open the tracker menu.
+   Achievement progress refreshes immediately on open and every five seconds while the menu is open.
 
 6. Some achievements may display information about a missing instance. Generally, the instance is not found when:
 
    - the achievement has already been obtained
    - the achievement is not obtainable in the current game mode
    - player opened the menu from the main menu (just load a save or create a new one and open the menu again)
-
